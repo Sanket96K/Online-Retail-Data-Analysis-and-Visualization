@@ -55,3 +55,44 @@ install.packages("wordcloud") # Word clouds.
 install.packages("stringr") # String manipulation.
 install.packages("plotly")  # Interactive charts.
 install.packages("leaflet") # Geographical mapping.
+
+# Workflow
+
+## Step 1: Load Libraries and Read Data
+
+After installing the necessary packages, load them into your R session. Next, read the datasets from Excel and CSV files into R. The datasets are combined using `rbind`, cleaned by omitting rows with missing values (`na.omit`), and removing duplicate rows.
+
+## Step 2: Data Preprocessing
+
+Cleaned data is processed further by:
+
+- Formatting dates.
+- Extracting relevant subsets for focused analysis.
+- Managing computational load and narrowing down analysis to specific areas of interest.
+
+## Step 3: Quantitative Analysis
+
+We employ a **Generalized Linear Model (GLM)** to explore relationships within the data. For example, we analyze how factors like unit price and month of sale influence transaction quantities.
+
+## Step 4: Qualitative Analysis
+
+We preprocess product descriptions by:
+
+- Converting text to lowercase.
+- Removing punctuation, numbers, and stopwords.
+
+A **term-document matrix** is created, and prevalent themes and words are identified. Results are visualized through word clouds and bar charts of word frequencies.
+
+## Step 5: Visualization
+
+- **Interactive Bar Chart (Plotly)**: Transactions per country are visualized, offering an engaging exploration of the data.
+- **Word Cloud**: Highlights significant terms in product descriptions.
+- **Geographical Mapping (Leaflet)**: Transactions are mapped geographically with dynamic color scales to show distribution and intensity.
+
+---
+
+# How to Use
+
+1. Clone the repository to your local machine:
+   ```bash
+   git clone <repository-url>
