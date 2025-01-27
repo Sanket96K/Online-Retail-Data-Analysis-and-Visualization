@@ -1,0 +1,360 @@
+---
+title: "Assignment 3"
+format: html
+editor: visual
+---
+
+## 
+
+## Quarto
+
+### Installing required packages
+
+```{r}
+install.packages("tidyr")   #Package for data tidying operations and wrangling.
+install.packages("readxl")  # Package for reading Excel files into R.  
+install.packages("readr")   # Package for reading data into R efficiently.
+install.packages("plyr")    # Package for data manipulation and transformation.
+install.packages("mgcv")    # Package for GAM and other regression models.
+install.packages("dplyr") # Package for data manipulation and transformation.
+
+#Required packages for qualitative analysis. 
+install.packages("tm")              # Package for text mining tasks. 
+install.packages("wordcloud")       # Package for generating word clouds.
+install.packages("stringr")   # Package for string manipulation functions. 
+
+# Required for geographical mapping.
+install.packages("leaflet")  # Installs the 'leaflet' package, which provides an interactive mapping tool for creating web-based maps in R.  
+
+# Required for visualisations 
+install.packages("plotly") 
+```
+
+This block of R code installs the necessary R packages facilitating data manipulation and analysis tasks within the R environment.
+
+### Loading required libraries.
+
+```{r}
+library(readxl) # Importing Excel files into R. 
+library(readr)  # Package for reading data into R, including CSV and text files.
+library(tidyr)  # Tidying and reshaping data. 
+library(plyr)  # Tools for splitting, applying, and combining data. 
+library(mgcv)   # Generalized additive modeling framework.
+library(dplyr)  # Data manipulation and transformation. 
+library(tm)     # Text mining tools for preprocessing text data. 
+library(wordcloud)  # Creating word clouds for text analysis. 
+library(stringr)    # Package for string manipulation functions. 
+library(leaflet) 
+library(plotly) 
+```
+
+This block of R code loads essential packages for data manipulation and text analysis tasks
+
+### Reading the datasets
+
+```{r}
+online_retail_1 <- read_excel("C:\\Users\\Online_Retail_1.xlsx") 
+online_retail_2 <- read_csv("C:\\Users\\Online_Retail_2.csv") 
+online_retail_3 <- read_csv("C:\\Users\\Online_Retail_3.csv")
+```
+
+This code block reads data from three separate files: "Online_Retail_1.xlsx" (an Excel file) and two CSV files ("Online_Retail_2.csv" and "Online_Retail_3.csv"). The data from these files is stored in three separate variables named "online_retail_1," "online_retail_2," and "online_retail_3" respectively, enabling further analysis and manipulation within the Quarto document.
+
+### Data Inspection and Preparation
+
+```{r}
+str(online_retail_1)
+# Displays the structure of the data stored in the variable 'online_retail. 
+# Converts the 'InvoiceDate' column in the 'online_retail_1' dataset to character type.
+online_retail_1$InvoiceDate <- as.character(online_retail_1$InvoiceDate)  
+str(online_retail_2)  
+# Displays the structure of the data stored in the variable 'online_retail_2'.
+str(online_retail_3) 
+# Displays the structure of the data stored in the variable 'online_retail_3'.
+```
+
+The code first examines the structure of the dataset stored in the variable 'online_retail_1' using the 'str()' function. It then converts the 'InvoiceDate' column within 'online_retail_1' to character type. Subsequently, it inspects the structures of datasets stored in variables 'online_retail_2' and 'online_retail_3' to understand their compositions.
+
+### Removing the excess column from the third dataset
+
+```{r}
+online_retail_3 <- online_retail_3[ , -ncol(online_retail_3)]
+```
+
+This code snippet modifies the dataset stored in the variable 'online_retail_3' by removing the last column. It uses the 'ncol()' function to determine the number of columns in 'online_retail_3' and then indexes the dataset to exclude the last column using '-ncol(online_retail_3)'. This operation effectively drops the last column from 'online_retail_3', potentially to refine the dataset for further analysis or to remove irrelevant information.
+
+### Merging the data
+
+```{r}
+combined_data <- rbind(online_retail_1, online_retail_2, online_retail_3)
+cleaned_data <- na.omit(combined_data)
+cleaned_data <- cleaned_data %>% distinct()
+```
+
+This code snippet combines the individual datasets into one, removes any rows with missing values, and then eliminates duplicate rows from the resulting dataset. The final 'cleaned_data' dataset represents a consolidated and cleaned version of the original datasets, ready for analysis.
+
+### Creating a sub data set to run models and analysis to free some space
+
+```{r}
+sub_cleaned_data <- cleaned_data[1:10000, ]
+```
+
+This line of code extracts the first 10,000 rows from the 'cleaned_data' dataset, maintaining all columns, and assigns this subset to the variable 'sub_cleaned_data'.
+
+### Converting InvoiceDate to Month
+
+```{r}
+sub_cleaned_data$Month <- format(as.Date(sub_cleaned_data$InvoiceDate), "%m")
+cleaned_data$Month <- format(as.Date(cleaned_data$InvoiceDate), "%m")
+```
+
+This code snippet creates a new column 'Month' in both the 'sub_cleaned_data' and 'cleaned_data' datasets, containing only the month information extracted from the 'InvoiceDate' column. This is achieved by converting 'InvoiceDate' to Date objects and then formatting it to extract and display only the month component using the "%m" specifier.
+
+### Filter out rows where Quantity is negative
+
+```{r}
+cleaned_data <- cleaned_data %>% filter(Quantity > 0)
+```
+
+This line of code removes any rows from the 'cleaned_data' dataset where the quantity of items purchased ('Quantity') is less than or equal to zero, effectively eliminating any instances of negative or zero quantities.
+
+### Fitting a GLM model
+
+```{r}
+model <- glm(Quantity ~ UnitPrice + as.factor(Month), data=cleaned_data, family=poisson())
+summary(model)
+```
+
+This code snippet conducts a Poisson regression analysis to investigate the relationship between the quantity of items purchased and the unit price along with the month of purchase. The 'summary()' function provides detailed statistical information about the model's coefficients and overall fit, aiding in interpreting the relationships between the variables.
+
+### Linear Model with the assumption if non-negativity isn't met
+
+```{r}
+model_linear <- lm(Quantity ~ UnitPrice + as.factor(Month), data=cleaned_data)
+summary(model_linear)
+```
+
+This code snippet fits a linear regression model in R using the 'lm()' function, where the quantity of items purchased ('Quantity') is predicted based on 'UnitPrice' and 'Month' variables in the 'cleaned_data' dataset. Then, it displays a summary of the model's results, including coefficients, standard errors, significance levels, and goodness-of-fit measures.
+
+### Proceeding with Qualitative Analysis
+
+```{r}
+docs <- Corpus(VectorSource(sub_cleaned_data$Description))
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removePunctuation)
+docs <- tm_map(docs, removeNumbers)
+docs <- tm_map(docs, removeWords, stopwords("english"))
+```
+
+The provided code initializes a text corpus named 'docs' by extracting the 'Description' column from the 'sub_cleaned_data' dataset. Subsequently, it applies several text preprocessing steps using the 'tm' package in R. These steps include converting all text to lowercase, removing punctuation, numbers, and common English stopwords. By executing these preprocessing transformations, the 'docs' corpus is cleaned and prepared for further text analysis tasks, such as sentiment analysis or topic modeling.
+
+### Create a Term-Document Matrix
+
+```{r}
+tdm <- TermDocumentMatrix(docs)
+```
+
+The code generates a term-document matrix (TDM) named 'tdm' using the 'TermDocumentMatrix()' function in R, capturing the frequency of terms across documents in the provided corpus. This matrix facilitates text analysis by quantifying the occurrence of terms within documents, enabling various text mining tasks like keyword extraction or document similarity measurement.
+
+### Analyzing the text data
+
+```{r}
+# Finding the most frequent words
+m <- as.matrix(tdm)
+word_freqs <- sort(rowSums(m), decreasing=TRUE)
+word_freqs <- data.frame(word = names(word_freqs), freq = word_freqs)
+```
+
+This code snippet converts the term-document matrix 'tdm' into a regular matrix named 'm' using 'as.matrix()'. Then, it calculates the total frequency of each word across all documents by summing up the rows of 'm', sorting these frequencies in descending order. Finally, it creates a data frame named 'word_freqs' containing two columns: 'word', which stores the names of the words, and 'freq', which stores their corresponding frequencies.
+
+### Plotting the most frequent words
+
+```{r}
+wordcloud(words = word_freqs$word, freq = word_freqs$freq, min.freq = 1,
+          max.words = 100, random.order = FALSE, colors = brewer.pal(8, "Dark2"))
+```
+
+This code snippet generates a word cloud visualization using the 'wordcloud()' function in R. It takes the words from the 'word_freqs\$word' vector and their corresponding frequencies from 'word_freqs\$freq'. The 'min.freq' parameter sets the minimum frequency threshold for including words in the word cloud, while 'max.words' sets the maximum number of words to display. 'random.order' determines whether the words are arranged randomly, and 'colors' specifies the color palette for the word cloud, in this case, using a Dark2 palette from the 'RColorBrewer' package.
+
+### Frequency Distribution of Countries
+
+```{r}
+country_freq <- combined_data %>%
+  group_by(Country) %>%
+  summarise(Transactions = n(), .groups = 'drop') %>%
+  arrange(desc(Transactions))
+```
+
+This code snippet uses the dplyr package in R to perform data aggregation and summarization tasks:
+
+1.  It groups the 'combined_data' dataset by the 'Country' variable using the 'group_by()' function.
+2.  It calculates the number of transactions for each country using the 'summarise()' function with 'Transactions = n()', where 'n()' counts the number of observations in each group.
+3.  The '.groups = 'drop'' argument ensures that the grouping information is dropped after summarization.
+4.  Finally, it arranges the resulting summary data frame in descending order based on the number of transactions ('Transactions') using the 'arrange()' function.
+
+### Display the frequency distribution of countries
+
+```{r}
+print(country_freq)
+```
+
+### Defining coordinates for each country
+
+```{r}
+country_coords_ext <- data.frame(
+  Country = c(
+    "Australia", "Austria", "Bahrain", "Belgium", "Brazil",
+    "Canada", "Channel Islands", "Cyprus", "Czech Republic", "Denmark",
+    "EIRE", "European Community", "Finland", "France", "Germany",
+    "Greece", "Hong Kong", "Iceland", "Israel", "Italy",
+    "Japan", "Lebanon", "Lithuania", "Malta", "Netherlands",
+    "Nigeria", "Norway", "Poland", "Portugal", "RSA",
+    "Saudi Arabia", "Singapore", "Spain", "Sweden", "Switzerland",
+    "United Arab Emirates", "United Kingdom", "USA"
+  ),
+  Lat = c(
+    -25.2744, 47.5162, 26.0667, 50.5039, -14.2350,
+    56.1304, 49.2144, 35.1264, 49.8175, 56.2639,
+    53.1424, 50.8503, 61.9241, 46.2276, 51.1657,
+    39.0742, 22.3193, 64.9631, 31.0461, 41.8719,
+    36.2048, 33.8547, 55.1694, 35.9375, 52.1326,
+    9.0820, 60.4720, 51.9194, 39.3999, -30.5595,
+    23.8859, 1.3521, 40.4637, 60.1282, 46.8182,
+    23.4241, 55.3781, 37.0902
+  ),
+  Lng = c(
+    133.7751, 14.5501, 50.5577, 4.4699, -51.9253,
+    -106.3468, -2.1347, 33.4299, 15.4730, 9.5018,
+    -7.6921, 4.3517, 25.7482, 2.2137, 10.4515,
+    21.8243, 114.1694, -19.0208, 34.8516, 12.5674,
+    138.2529, 35.8623, 23.8813, 14.3754, 5.2913,
+    8.6753, 8.4689, 19.1451, -8.2245, 22.9375,
+    45.0792, 103.8198, -3.7492, 18.6435, 8.2275,
+    53.8478, -3.4360, -95.7129
+  )
+)
+```
+
+This code defines a data frame named 'country_coords_ext', containing information about the countries' names along with their corresponding latitude and longitude coordinates. Each row in the data frame represents a country, with the 'Country' column storing the country names, the 'Lat' column storing the latitude values, and the 'Lng' column storing the longitude values. These coordinates can be utilized for mapping or visualizing geographical data using tools like leaflet in R.\\
+
+### Merging frequency data with coordinates
+
+```{r}
+country_freq <- merge(country_freq, country_coords_ext, by = "Country", all.x = TRUE)
+```
+
+This code merges two data frames, 'country_freq' and 'country_coords_ext', based on the common column 'Country'. The 'by = "Country"' argument specifies that the merging should be performed based on the 'Country' column. The 'all.x = TRUE' argument ensures that all rows from 'country_freq' are retained in the merged dataset, even if there are no corresponding matches in 'country_coords_ext'. This merging operation combines the frequency of transactions per country with the latitude and longitude coordinates of each country, potentially for further geographical analysis or visualization.
+
+### Filtering out 'Unspecified'
+
+```{r}
+country_freq <- country_freq[!is.na(country_freq$Lat) & country_freq$Country != "Unspecified", ]
+```
+
+This code filters the 'country_freq' dataset, removing rows where the latitude ('Lat') is missing (NA) and where the country name is "Unspecified". The '!' operator negates the condition, selecting rows where the latitude is not NA. Additionally, it ensures that the country name is not "Unspecified" using the logical operator '&'. This filtering operation removes any incomplete or unspecified country data, potentially ensuring the integrity of the dataset for subsequent analysis or visualization.
+
+### Defining a color palette
+
+```{r}
+pal <- colorNumeric(palette = "viridis", domain = country_freq$Transactions, na.color = "transparent")
+```
+
+This code defines a color palette named 'pal' using the 'colorNumeric()' function from the 'leaflet' package in R. It assigns colors from the "viridis" palette based on the numeric values provided in 'country_freq\$Transactions'. The 'domain' argument specifies the range of values to map to colors, and 'na.color' specifies the color for any missing values (NA), set here to "transparent" to indicate no color. This palette can be used to color-code elements on a map based on the number of transactions associated with each country.
+
+### Correcting Leaflet map construction and adding a legend
+
+```{r}
+leaflet(data = country_freq) %>%
+  addTiles() %>%
+  addCircleMarkers(
+    lng = ~Lng, lat = ~Lat,
+    radius = ~sqrt(Transactions) * 2,
+    popup = ~paste(Country, ": ", Transactions, "transactions"),
+    fillColor = ~pal(Transactions),  # Dynamically set color based on Transactions
+    fillOpacity = 0.7, color = "#FFFFFF"
+  ) %>%
+  addLegend(position = "bottomright", 
+            title = "Transactions", 
+            pal = pal,  # Pass the color palette function
+            values = ~Transactions,  # The variable used to determine the color
+            opacity = 1, 
+            labFormat = labelFormat(suffix = " transactions"))
+```
+
+This code utilizes the 'leaflet' package in R to create an interactive map visualization:
+
+1.  'leaflet(data = country_freq)' initializes the map with data from the 'country_freq' dataset.
+2.  'addTiles()' adds a base layer to the map.
+3.  'addCircleMarkers()' adds circular markers to the map, positioned at the latitude ('Lat') and longitude ('Lng') coordinates specified in the dataset. The size of the markers is determined by the square root of the number of transactions, scaled by a factor of 2. The popup displays the country name and the number of transactions.
+4.  'fillColor = \~pal(Transactions)' dynamically sets the marker colors based on the number of transactions using the color palette defined earlier.
+5.  'addLegend()' adds a legend to the map at the bottom-right corner. The legend title is set to "Transactions". It uses the color palette ('pal') and the variable 'Transactions' to determine the color and labels respectively. The legend displays the transaction count with a suffix " transactions".
+
+### Converting country_freq to a plotly object
+
+```{r}
+p <- plot_ly(country_freq, x = ~Country, y = ~Transactions, type = 'bar', 
+             marker = list(color = 'rgba(50, 171, 96, 0.6)',
+                           line = list(color = 'rgba(50, 171, 96, 1.0)', width = 1)),
+             text = ~paste('Transactions: ', Transactions),
+             hoverinfo = 'text') %>%
+  layout(title = 'Transactions Per Country',
+         xaxis = list(title = 'Country'),
+         yaxis = list(title = 'Number of Transactions'))
+p
+
+```
+
+This code creates a bar plot using the 'plot_ly()' function from the 'plotly' package in R:
+
+1.  'plot_ly(country_freq, x = \~Country, y = \~Transactions, type = 'bar'' specifies that the plot will use data from the 'country_freq' dataset, with 'Country' on the x-axis and 'Transactions' on the y-axis, and the plot type is set to 'bar'.
+2.  'marker = list(color = 'rgba(50, 171, 96, 0.6)', line = list(color = 'rgba(50, 171, 96, 1.0)', width = 1))' customizes the appearance of the bars, setting the fill color to a green shade with some transparency, and the border color to a darker shade of green.
+3.  'text = \~paste('Transactions: ', Transactions)' specifies the text that appears when hovering over each bar, showing the corresponding number of transactions.
+4.  'hoverinfo = 'text'' configures the hover information to display the text specified in the 'text' argument.
+5.  'layout()' sets the layout properties for the plot, including the title, x-axis title, and y-axis title.
+6.  'p' displays the generated plot.
+
+### Preparing the word frequency data
+
+```{r}
+word_freqs <- as.data.frame(sort(rowSums(as.matrix(tdm)), decreasing = TRUE))
+word_freqs$word <- rownames(word_freqs)
+colnames(word_freqs) <- c("freq", "word")
+```
+
+This code calculates the frequency of each word in a term-document matrix (TDM) and organizes the results into a data frame named 'word_freqs':
+
+1.  'rowSums(as.matrix(tdm))' calculates the total frequency of each word by summing up the rows of the TDM.
+2.  'sort(..., decreasing = TRUE)' sorts the word frequencies in descending order.
+3.  'as.data.frame(...)' converts the sorted word frequencies into a data frame.
+4.  'rownames(word_freqs)' retrieves the original words from the row names of the data frame.
+5.  'word_freqs\$word \<- rownames(word_freqs)' assigns the word names to a new column named 'word'.
+6.  'colnames(word_freqs) \<- c("freq", "word")' sets the column names of the data frame to "freq" for word frequencies and "word" for the actual words.
+
+### Explicitly specifying the trace type
+
+```{r}
+p <- plot_ly(word_freqs, x = ~jitter(seq_along(word)), y = ~freq, type = 'scatter', 
+             text = ~paste(word), mode = 'markers+text', 
+             marker = list(size = ~sqrt(freq), color = ~freq, showscale = TRUE),
+             hoverinfo = 'text') %>%
+  layout(title = 'Word Frequencies',
+         xaxis = list(showticklabels = FALSE),
+         yaxis = list(title = 'Frequency'))
+p
+```
+
+This code creates a scatter plot using the 'plot_ly()' function from the 'plotly' package in R:
+
+1.  'plot_ly(word_freqs, x = \~jitter(seq_along(word)), y = \~freq, type = 'scatter'' specifies that the plot will use data from the 'word_freqs' data frame, with 'seq_along(word)' jittered on the x-axis and 'freq' on the y-axis, and the plot type is set to 'scatter'.
+
+2.  'text = \~paste(word)' specifies the text that appears when hovering over each point, showing the corresponding word.
+
+3.  'mode = 'markers+text'' configures the plot to display both markers and text labels.
+
+4.  'marker = list(size = \~sqrt(freq), color = \~freq, showscale = TRUE)' customizes the appearance of the markers, setting the marker size proportional to the square root of the word frequency, and the marker color to the word frequency values with a color scale displayed.
+
+5.  'hoverinfo = 'text'' configures the hover information to display the text specified in the 'text' argument.
+
+6.  'layout()' sets the layout properties for the plot, including the title and y-axis title.
+
+7.  'p' displays the generated plot.
