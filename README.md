@@ -97,3 +97,26 @@ A **term-document matrix** is created, and prevalent themes and words are identi
 1. Clone the repository to your local machine:
    ```bash
    git clone <repository-url>
+   ```
+2. Open the Assignment 3.qmd file in RStudio.
+3. Install the required packages if not already installed.
+4. Render the Quarto file to generate the HTML output
+5. Explore the output for insights and visualizations.
+
+
+# File Structure
+
+- Assignment 3.qmd: The main Quarto Markdown file containing all instructions and scripts.
+- README.md: This file, providing an overview of the repository.
+
+# Contributing
+
+If you would like to contribute to this project, please fork the repository, make your changes, and submit a pull request. Contributions are welcome!
+
+# License
+
+This project is licensed under the MIT License. See the LICENSE file for more details.
+
+# Acknowledgments
+
+Thanks to the authors of the R packages used in this assignment for their invaluable tools and contributions to the R ecosystem.
