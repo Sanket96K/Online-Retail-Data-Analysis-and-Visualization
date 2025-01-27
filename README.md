@@ -56,6 +56,8 @@ install.packages("stringr") # String manipulation.
 install.packages("plotly")  # Interactive charts.
 install.packages("leaflet") # Geographical mapping.
 
+---
+
 # Workflow
 
 ## Step 1: Load Libraries and Read Data
@@ -89,7 +91,6 @@ A **term-document matrix** is created, and prevalent themes and words are identi
 - **Word Cloud**: Highlights significant terms in product descriptions.
 - **Geographical Mapping (Leaflet)**: Transactions are mapped geographically with dynamic color scales to show distribution and intensity.
 
----
 
 # How to Use
 
